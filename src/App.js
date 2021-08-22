@@ -26,6 +26,9 @@ const App = () => {
   const [songName, setSongName] = useState("")
   let song_Name 
 
+  const [artistName, setArtistName] = useState("")
+  let artist_Name 
+
   const [tracksInPlaylistsURLs, setTracksInPlaylistsURLs] = useState([]) //API track endpoints for playlists
   var tracks_In_Playlists_URLs = []
 
@@ -35,17 +38,37 @@ const App = () => {
   var playlist_Lengths = [] // amount of songs in each playlist
   var playlist_Lengths_Added = [] // index of tracks in the all tracks array
 
-  const [realPlaylistsToDisplay, setRealPlaylistsToDisplay] = useState([]) // tracks in all of the playlists
+  const [realPlaylistsToDisplay, setRealPlaylistsToDisplay] = useState([]) // lists of playlists to display
   var real_Playlists_To_Display = []
 
-  const [realImageToDisplay, setRealImageToDisplay] = useState([]) // tracks in all of the playlists
+  const [realImageToDisplay, setRealImageToDisplay] = useState([]) // playlist images to display 
   var real_Image_To_Display = []
+
+  const [realAlbumCoverToDisplay, setRealAlbumCoverToDisplay] = useState([]) // song album cover to display
+  var real_Album_Cover_To_Display = []
     
 
-  useEffect(() => {
+  // useEffect(() => {
+  
+  // }, []);
 
+  const handleInput = (event) => {
+      song_Name = event.target.value
+      setSongName(song_Name)
+  }
+
+  const handleArtistInput = (event) => {
+    artist_Name = event.target.value
+    console.log(artist_Name)
+    setArtistName(artist_Name)
+  }
+
+  const getPlaylistsByUser = async (token) => {
+
+    //working token  https://api.spotify.com/v1/users/ninarao09/playlists?limit=32
+   
     var options = {
-      url: "https://api.spotify.com/v1/users/ninarao09/playlists?limit=10",
+      url: "https://api.spotify.com/v1/me/playlists?offset=9&limit=38",
       headers: { 'Authorization': 'Bearer ' + token},
       json: true
     };
@@ -60,22 +83,18 @@ const App = () => {
            playlist_Names_And_URL.push({
              playlistName: body.items[i].name,
              playlistsURLs: body.items[i].tracks.href,
-             imageURL: body.items[i].images[0].url
+             imageURL: body.items[i].images[0].url,
            })
       }
 
-    });
+    });   
+   
+   
+   
+   console.log(playlist_Names)
+   
+    setTimeout(() => {
 
-    
-  });
-
-  const handleInput = (event) => {
-      song_Name = event.target.value
-      setSongName(song_Name)
-  }
-
-  const getPlaylistsByUser = async (token) => {
-    
     setPlaylistNames(playlist_Names)
     setPlaylistImages(playlist_Images)
     setTracksInPlaylistsURLs(tracks_In_Playlists_URLs)
@@ -85,7 +104,7 @@ const App = () => {
 
     //songName can be used here
     //input the song name -> search through all the tracks in every playlist if song exists there the display the playlists
-    for(var i=0; i<10; ++i){
+    for(var i=0; i<38; ++i){
       var options = {
         url: tracks_In_Playlists_URLs[i],
         headers: { 'Authorization': 'Bearer ' + token},
@@ -105,7 +124,9 @@ const App = () => {
             all_Tracks.push({
               track: body.items[j].track.name,
               playlistName: name,
-              image: image
+              image: image,
+              albumCover: body.items[j].track.album.images[1],
+              artist:  body.items[j].track.artists[0].name
           })
         }
       });
@@ -115,31 +136,42 @@ const App = () => {
     //for some reason the all_tracks arrasy is not letting me read the elements
     // jk I have to press twice
 
-    //setTimeout(() => {
-      findHowManyTimesTheSongOccurs()
-    //}, 1000);
+    
+    setDisplays()
+    }, 500);
 
   }
 
-  const findHowManyTimesTheSongOccurs = () => {
+  const setDisplays = () => {
 
     console.log(allTracks)
     //I have to press twice for it to work
-    //Also track do not necessaryily line up to playlists
     
     let index_saved_at = []
     for(var i=0; i<allTracks.length; ++i){
-        if(allTracks[i].track === songName){
+        if(allTracks[i].track === songName && allTracks[i].artist === artistName){
           index_saved_at.push(i)
           real_Playlists_To_Display.push(allTracks[i].playlistName)
           real_Image_To_Display.push(allTracks[i].image)
+          real_Album_Cover_To_Display.push(allTracks[i].albumCover)
         }
     }
 
+
+    real_Album_Cover_To_Display.splice(1, real_Album_Cover_To_Display.length )
+    let display = []
+
+    if(real_Album_Cover_To_Display.length !== 0){
+      display.push(real_Album_Cover_To_Display[0].url)
+      setRealAlbumCoverToDisplay(display)
+    }
+
     console.log(index_saved_at)
-    console.log(real_Playlists_To_Display)
+    console.log(real_Album_Cover_To_Display)
+
     setRealPlaylistsToDisplay(real_Playlists_To_Display)
     setRealImageToDisplay(real_Image_To_Display)
+    
 
 }
   
@@ -161,10 +193,18 @@ const App = () => {
                 <br/>
               </div>
               <br/>
-              <input onChange={handleInput} ></input>
-              <br/>
               <div>
-                <button onClick={() => getPlaylistsByUser(token)}>Find Playlists</button>
+                 {realAlbumCoverToDisplay.map((names) => (
+                  <img class="img1" src={names} alt="albumCover" height='175' width='175'/>
+                ))}
+              </div>
+              <br/>
+              <input class="input" placeHolder="Song Name" onChange={handleInput} ></input>
+              <br/> <br/>
+              <input class="input" placeHolder="Artist Name" onChange={handleArtistInput} ></input>
+              <br/> <br/>
+              <div>
+                <button class="button button1" onClick={() => getPlaylistsByUser(token)}>Find Playlists</button>
               </div>
               <br/>
               PLAYLISTS:
@@ -175,7 +215,7 @@ const App = () => {
                 ))}
 
                 {realImageToDisplay.map((names) => (
-                  <img src={names} alt="spotify" height='200' width='200'/>
+                  <img class="img" src={names} alt="spotify" height='200' width='200'/>
                 ))}
               </div>
               <br/>
@@ -183,11 +223,12 @@ const App = () => {
             </center>            
           </SpotifyApiContext.Provider>
           </div>
-
-          <div class="footer">
-            <br/><br/><br/>
+          <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+          <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+          {/* <div class="footer">
+           
               <p>STAY CONNECTED</p>
-          </div>
+          </div> */}
 
         </div>
       ) 
@@ -197,13 +238,14 @@ const App = () => {
         <div>
           <center>
             <h1>Login Page</h1>
+            <br/>
             <div>
               <img src={spotify_Logo} alt="spotify" height='100' width='310' />
             </div>
             <SpotifyAuth
               redirectUri='http://localhost:3000/callback'
               clientID='f40c0fc1713d49219c0de5415aa70c8b'
-              scopes={[Scopes.userReadPrivate, 'user-read-email']} // either style will work
+              scopes={['playlist-read-private',  'user-read-email', 'playlist-read-collaborative']} // Scopes.userReadPrivate, 'user-read-email', Scopes.playlistReadPrivate,' playlist-read-private'
             />
           </center>
         </div>
