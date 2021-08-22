@@ -65,7 +65,7 @@ const App = () => {
 
   const getPlaylistsByUser = async (token) => {
 
-    //working token  https://api.spotify.com/v1/users/ninarao09/playlists?limit=32
+    //working token  https://api.spotify.com/v1/users/username/playlists?limit=32
    
     var options = {
       url: "https://api.spotify.com/v1/me/playlists?offset=9&limit=38",
